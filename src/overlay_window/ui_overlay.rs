@@ -277,7 +277,6 @@ impl OverlayApp {
                 }
 
                 // ---- combo overlay ----
-                let combo_color = egui::Color32::from_rgb(220, 80, 80);
                 let combo_bg = egui::Color32::from_rgba_premultiplied(40, 40, 40, 220);
                 let combo_font = egui::FontId::proportional(0.20 * size * font_scale);
                 let current_layer = match keyboard.active_layer_index() {
@@ -312,12 +311,6 @@ impl OverlayApp {
                     cx /= key_centers.len() as f32;
                     cy /= key_centers.len() as f32;
                     let center = egui::pos2(cx, cy);
-                    for p in &key_centers {
-                        ui.painter().line_segment(
-                            [center, *p],
-                            egui::Stroke::new(2.0, combo_color),
-                        );
-                    }
                     let label_galley = ui.painter().layout_no_wrap(
                         combo.label.clone(),
                         combo_font.clone(),
