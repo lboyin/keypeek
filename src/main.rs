@@ -7,6 +7,7 @@ mod layout_key;
 mod overlay_window;
 mod protocols;
 mod qmk_keycode_labels;
+mod combos;
 mod settings;
 mod tray;
 mod ui_wake;
@@ -20,6 +21,7 @@ use ui_wake::UiWake;
 
 fn main() -> Result<(), eframe::Error> {
     let settings = Settings::load().unwrap_or_default();
+    let combos = combos::load_combos();
     let available_devices = discover_devices();
 
     let options = eframe::NativeOptions {
@@ -56,6 +58,7 @@ fn main() -> Result<(), eframe::Error> {
                 UiWake::from_ctx(&cc.egui_ctx),
                 settings,
                 available_devices,
+                combos.clone(),
             )))
         }),
     )

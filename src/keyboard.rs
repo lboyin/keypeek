@@ -147,6 +147,20 @@ impl Keyboard {
         self.matrix.lock().unwrap().is_pressed(row, col)
     }
 
+
+    /// Index of the highest-numbered active layer (momentary OR default-layer
+    /// promoted via toggle). Falls back to 0 if no non-base layer is active.
+    pub fn active_layer_index(&self) -> Option<usize> {
+        let layer_state = *self.layer_state.lock().unwrap();
+        let default_layer_state = *self.default_layer_state.lock().unwrap();
+        let combined = layer_state | default_layer_state;
+        if combined == 0 {
+            return Some(0);
+        }
+        // highest bit set
+        Some(31 - combined.leading_zeros() as usize)
+    }
+
     pub fn set_timeout(&self, timeout: i64) {
         *self.timeout_ms.lock().unwrap() = timeout;
     }

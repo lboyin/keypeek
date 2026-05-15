@@ -21,6 +21,7 @@ pub struct OverlayApp {
     settings: SettingsState,
     session: SessionState,
     connect: ConnectDraftState,
+    pub combos: Vec<crate::combos::Combo>,
 }
 
 impl OverlayApp {
@@ -29,6 +30,7 @@ impl OverlayApp {
         ui_wake: UiWake,
         base_settings: Settings,
         available_devices: Vec<DiscoveredDevice>,
+        combos: Vec<crate::combos::Combo>,
     ) -> Self {
         Self {
             _tray_icon: tray_icon,
@@ -62,6 +64,7 @@ impl OverlayApp {
                 },
                 pending_connect: None,
             },
+            combos,
         }
     }
 

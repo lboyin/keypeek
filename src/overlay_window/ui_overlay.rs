@@ -275,6 +275,65 @@ impl OverlayApp {
                         _ => {}
                     }
                 }
+
+                // ---- combo overlay ----
+                let combo_color = egui::Color32::from_rgb(220, 80, 80);
+                let combo_bg = egui::Color32::from_rgba_premultiplied(40, 40, 40, 220);
+                let combo_font = egui::FontId::proportional(0.20 * size * font_scale);
+                let current_layer = match keyboard.active_layer_index() {
+                    Some(i) => i,
+                    None => 0,
+                };
+                for combo in &self.combos {
+                    if combo.positions.len() < 2 {
+                        continue;
+                    }
+                    if !combo.layers.is_empty() && !combo.layers.contains(&current_layer) {
+                        continue;
+                    }
+                    let key_centers: Vec<egui::Pos2> = combo
+                        .positions
+                        .iter()
+                        .filter_map(|&i| keyboard.layout.keys.get(i))
+                        .map(|k| egui::pos2(
+                            (k.x + k.w * 0.5) * size,
+                            (k.y + k.h * 0.5) * size,
+                        ) + window_pos.to_vec2())
+                        .collect();
+                    if key_centers.len() < 2 {
+                        continue;
+                    }
+                    let mut cx = 0.0_f32;
+                    let mut cy = 0.0_f32;
+                    for p in &key_centers {
+                        cx += p.x;
+                        cy += p.y;
+                    }
+                    cx /= key_centers.len() as f32;
+                    cy /= key_centers.len() as f32;
+                    let center = egui::pos2(cx, cy);
+                    for p in &key_centers {
+                        ui.painter().line_segment(
+                            [center, *p],
+                            egui::Stroke::new(2.0, combo_color),
+                        );
+                    }
+                    let label_galley = ui.painter().layout_no_wrap(
+                        combo.label.clone(),
+                        combo_font.clone(),
+                        egui::Color32::WHITE,
+                    );
+                    let bg_rect = egui::Rect::from_center_size(
+                        center,
+                        egui::vec2(
+                            label_galley.rect.width() + 8.0,
+                            label_galley.rect.height() + 4.0,
+                        ),
+                    );
+                    ui.painter().rect_filled(bg_rect, 4.0, combo_bg);
+                    let label_pos = center - label_galley.rect.center().to_vec2();
+                    ui.painter().galley(label_pos, label_galley, egui::Color32::WHITE);
+                }
             });
     }
 }
