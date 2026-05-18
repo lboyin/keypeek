@@ -22,6 +22,13 @@ impl OverlayApp {
             |galley: &std::sync::Arc<egui::Galley>, max: f32| galley.rect.width() <= max;
         let max_width = rect.width() * 0.85;
 
+        // Hold-label galley (rendered below the tap label on keys with a hold action)
+        let hold_galley = key.hold.as_ref().map(|h| {
+            let hold_font = egui::FontId::proportional(0.16 * size * font_scale);
+            ui.painter().layout_no_wrap(h.full.clone(), hold_font, color)
+        });
+
+
         if let Some(symbol) = &key.symbol {
             let symbol_font = egui::FontId::proportional(0.33 * size * font_scale);
             let symbol_galley = create_galley(symbol.clone(), symbol_font);
@@ -34,6 +41,7 @@ impl OverlayApp {
                     return LabelGalleys {
                         symbol: Some(symbol_galley),
                         text: Some(text_galley),
+                        hold: hold_galley.clone(),
                     };
                 }
             }
@@ -46,6 +54,7 @@ impl OverlayApp {
                     return LabelGalleys {
                         symbol: Some(symbol_galley),
                         text: Some(text_galley),
+                        hold: hold_galley.clone(),
                     };
                 }
             }
@@ -53,6 +62,7 @@ impl OverlayApp {
             return LabelGalleys {
                 symbol: Some(symbol_galley),
                 text: None,
+                hold: hold_galley.clone(),
             };
         }
 
@@ -61,6 +71,7 @@ impl OverlayApp {
             return LabelGalleys {
                 symbol: None,
                 text: Some(full_galley),
+                hold: hold_galley.clone(),
             };
         }
 
@@ -70,6 +81,7 @@ impl OverlayApp {
                 return LabelGalleys {
                     symbol: None,
                     text: Some(short_galley),
+                    hold: hold_galley.clone(),
                 };
             }
             short.clone()
@@ -97,6 +109,7 @@ impl OverlayApp {
             return LabelGalleys {
                 symbol: None,
                 text: Some(fitted_text),
+                hold: hold_galley.clone(),
             };
         }
 
@@ -108,6 +121,7 @@ impl OverlayApp {
                 return LabelGalleys {
                     symbol: None,
                     text: Some(truncated_galley),
+                    hold: hold_galley.clone(),
                 };
             }
         }
@@ -115,6 +129,7 @@ impl OverlayApp {
         LabelGalleys {
             symbol: None,
             text: None,
+            hold: hold_galley.clone(),
         }
     }
 
@@ -240,6 +255,7 @@ impl OverlayApp {
                         LabelGalleys {
                             symbol: Some(symbol_galley),
                             text: Some(text_galley),
+                            hold,
                         } => {
                             let gap = 0.06 * size;
                             let total_width =
@@ -257,20 +273,46 @@ impl OverlayApp {
                             );
                             ui.painter().galley(sym_pos, symbol_galley, font_color);
                             ui.painter().galley(text_pos, text_galley, font_color);
+                            if let Some(h) = hold {
+                                let hold_color = egui::Color32::from_rgb(192, 57, 43);
+                                let hold_pos = egui::pos2(
+                                    rect.center().x - h.rect.width() * 0.5,
+                                    rect.max.y - h.rect.height(),
+                                );
+                                ui.painter().galley(hold_pos, h, hold_color);
+                            }
                         }
                         LabelGalleys {
                             symbol: Some(symbol_galley),
                             text: None,
+                            hold: hold_galley.clone(),
                         } => {
                             let sym_pos = rect.center() - symbol_galley.rect.center().to_vec2();
                             ui.painter().galley(sym_pos, symbol_galley, font_color);
+                            if let Some(h) = hold {
+                                let hold_color = egui::Color32::from_rgb(192, 57, 43);
+                                let hold_pos = egui::pos2(
+                                    rect.center().x - h.rect.width() * 0.5,
+                                    rect.max.y - h.rect.height(),
+                                );
+                                ui.painter().galley(hold_pos, h, hold_color);
+                            }
                         }
                         LabelGalleys {
                             symbol: None,
                             text: Some(text_galley),
+                            hold: hold_galley.clone(),
                         } => {
                             let label_pos = rect.center() - text_galley.rect.center().to_vec2();
                             ui.painter().galley(label_pos, text_galley, font_color);
+                            if let Some(h) = hold {
+                                let hold_color = egui::Color32::from_rgb(192, 57, 43);
+                                let hold_pos = egui::pos2(
+                                    rect.center().x - h.rect.width() * 0.5,
+                                    rect.max.y - h.rect.height(),
+                                );
+                                ui.painter().galley(hold_pos, h, hold_color);
+                            }
                         }
                         _ => {}
                     }
