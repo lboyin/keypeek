@@ -154,8 +154,8 @@ pub fn behavior_to_layout_key(behavior: &Behavior) -> Option<LayoutKey> {
             // come through as Unknown with two keycode params. If both look
             // like valid keycodes, render as a hold-tap (tap=param2, hold=param1).
             if *param1 != 0 && *param2 != 0 {
-                let hold_key = hid_usage_to_layout_key(zmk_studio_api::HidUsage::from_hid_usage(*param1));
-                let tap_key = hid_usage_to_layout_key(zmk_studio_api::HidUsage::from_hid_usage(*param2));
+                let hold_key = hid_usage_to_layout_key(zmk_studio_api::HidUsage::from_encoded(*param1));
+                let tap_key = hid_usage_to_layout_key(zmk_studio_api::HidUsage::from_encoded(*param2));
                 if !tap_key.tap.full.is_empty() && !hold_key.tap.full.is_empty() {
                     return Some(LayoutKey {
                         tap: tap_key.tap,
@@ -168,7 +168,7 @@ pub fn behavior_to_layout_key(behavior: &Behavior) -> Option<LayoutKey> {
             }
             // Single-param unknown — try rendering as a layer-tap-ish key
             if *param1 != 0 && *param2 == 0 {
-                let p1 = hid_usage_to_layout_key(zmk_studio_api::HidUsage::from_hid_usage(*param1));
+                let p1 = hid_usage_to_layout_key(zmk_studio_api::HidUsage::from_encoded(*param1));
                 if !p1.tap.full.is_empty() {
                     return Some(p1);
                 }
