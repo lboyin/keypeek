@@ -150,6 +150,30 @@ pub fn behavior_to_layout_key(behavior: &Behavior) -> Option<LayoutKey> {
             param1,
             param2,
         } => {
+            // Heuristic: custom hold-tap behaviors (&hml/&hmr/&p_pscr etc.)
+            // come through as Unknown with two keycode params. If both look
+            // like valid keycodes, render as a hold-tap (tap=param2, hold=param1).
+            if *param1 != 0 && *param2 != 0 {
+                let hold_key = hid_usage_to_layout_key(*param1);
+                let tap_key = hid_usage_to_layout_key(*param2);
+                if !tap_key.tap.full.is_empty() && !hold_key.tap.full.is_empty() {
+                    return Some(LayoutKey {
+                        tap: tap_key.tap,
+                        hold: Some(hold_key.tap),
+                        symbol: tap_key.symbol,
+                        kind: KeycodeKind::Modifier,
+                        layer_ref: None,
+                    });
+                }
+            }
+            // Single-param unknown — try rendering as a layer-tap-ish key
+            if *param1 != 0 && *param2 == 0 {
+                let p1 = hid_usage_to_layout_key(*param1);
+                if !p1.tap.full.is_empty() {
+                    return Some(p1);
+                }
+            }
+            // Fallback to hex
             let label = if *param2 != 0 {
                 format!("0x{:X} {} {}", behavior_id, param1, param2)
             } else if *param1 != 0 {
