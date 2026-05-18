@@ -22,6 +22,7 @@ pub struct OverlayApp {
     session: SessionState,
     connect: ConnectDraftState,
     pub combos: Vec<crate::combos::Combo>,
+    pub key_overrides: Vec<crate::combos::KeyOverride>,
 }
 
 impl OverlayApp {
@@ -31,6 +32,7 @@ impl OverlayApp {
         base_settings: Settings,
         available_devices: Vec<DiscoveredDevice>,
         combos: Vec<crate::combos::Combo>,
+        key_overrides: Vec<crate::combos::KeyOverride>,
     ) -> Self {
         Self {
             _tray_icon: tray_icon,
@@ -66,6 +68,7 @@ impl OverlayApp {
                 pending_connect: None,
             },
             combos,
+            key_overrides,
         }
     }
 
@@ -180,6 +183,4 @@ impl eframe::App for OverlayApp {
                 });
         }
 
-        self.schedule_overlay_hide_repaint(ctx);
-    }
-}
+        self.schedul

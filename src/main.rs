@@ -21,7 +21,7 @@ use ui_wake::UiWake;
 
 fn main() -> Result<(), eframe::Error> {
     let settings = Settings::load().unwrap_or_default();
-    let combos = combos::load_combos();
+    let (combos, key_overrides) = combos::load_combos_and_overrides();
     let available_devices = discover_devices();
 
     let options = eframe::NativeOptions {
@@ -59,6 +59,7 @@ fn main() -> Result<(), eframe::Error> {
                 settings,
                 available_devices,
                 combos.clone(),
+                key_overrides.clone(),
             )))
         }),
     )

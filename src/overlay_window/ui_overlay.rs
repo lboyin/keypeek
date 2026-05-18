@@ -215,13 +215,27 @@ impl OverlayApp {
                 ui.allocate_space(egui::vec2(layout_size.0 * size, layout_size.1 * size));
                 let window_pos = ui.min_rect().min;
 
-                for key in &keyboard.layout.keys {
+                for (key_index, key) in keyboard.layout.keys.iter().enumerate() {
                     let (effective_layer, is_background_key) =
                         keyboard.get_effective_key_layer(key.row, key.col);
 
-                    let layout_key = keyboard
+                    let mut layout_key = keyboard
                         .get_key(effective_layer as usize, key.row, key.col)
                         .unwrap_or_default();
+
+                    // Apply per-position override from combos.yaml if any
+                    if let Some(over) = self.key_overrides.iter().find(|o| o.position == key_index) {
+                        if let Some(tap) = over.tap.as_ref() {
+                            layout_key.tap = crate::layout_key::Label::new(tap.clone());
+                        }
+                        if let Some(hold) = over.hold.as_ref() {
+                            layout_key.hold = if hold.is_empty() {
+                                None
+                            } else {
+                                Some(crate::layout_key::Label::new(hold.clone()))
+                            };
+                        }
+                    }
 
                     let first_layer_key_kind = keyboard
                         .get_key(0, key.row, key.col)
