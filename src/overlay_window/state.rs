@@ -1,4 +1,5 @@
 use crate::connection::ConnectionTask;
+use crate::protocols::ConnectionSpec;
 use crate::device_discovery::DiscoveredDevice;
 use crate::keyboard::Keyboard;
 use crate::protocols::KeyboardDefinition;
@@ -58,6 +59,7 @@ pub struct SettingsState {
 pub struct SessionState {
     pub connection: AppConnectionState,
     pub ever_connected: bool,
+    pub last_spec: Option<ConnectionSpec>,
     pub connected_definition: Option<KeyboardDefinition>,
     pub layout_names: Vec<String>,
     pub active_layout_name: String,

@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -14,6 +15,7 @@ pub struct Keyboard {
     layer_state: Arc<Mutex<u32>>,
     default_layer_state: Arc<Mutex<u32>>,
     timeout_ms: Arc<Mutex<i64>>,
+    pub connection_lost: Arc<AtomicBool>,
 }
 
 impl Keyboard {
@@ -41,6 +43,7 @@ impl Keyboard {
         let time_to_hide_overlay = Arc::new(Mutex::new(Some(Instant::now())));
         let timeout_ms = Arc::new(Mutex::new(timeout));
         let matrix = Arc::new(Mutex::new(matrix));
+        let connection_lost = Arc::new(AtomicBool::new(false));
 
         let keyboard = Keyboard {
             layout,
@@ -49,6 +52,7 @@ impl Keyboard {
             layer_state: Arc::clone(&layer_state),
             default_layer_state: Arc::clone(&default_layer_state),
             timeout_ms: Arc::clone(&timeout_ms),
+            connection_lost: Arc::clone(&connection_lost),
         };
 
         let layer_state_clone = Arc::clone(&keyboard.layer_state);
@@ -56,9 +60,26 @@ impl Keyboard {
         let time_to_hide_clone = Arc::clone(&keyboard.time_to_hide_overlay);
         let timeout_clone = Arc::clone(&keyboard.timeout_ms);
         let matrix_clone = Arc::clone(&matrix);
+        let connection_lost_clone = Arc::clone(&connection_lost);
 
-        thread::spawn(move || loop {
-            if let Ok(response) = protocol.hid_read() {
+        thread::spawn(move || {
+            let mut consecutive_errors: u32 = 0;
+            loop {
+                match protocol.hid_read() {
+                    Err(_) => {
+                        consecutive_errors += 1;
+                        if consecutive_errors > 5 {
+                            // Device gone (sleep, unplug, etc.). Signal the UI
+                            // so it can attempt a reconnect, and exit this thread.
+                            connection_lost_clone.store(true, Ordering::Relaxed);
+                            ui_wake.request_repaint();
+                            break;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(50));
+                        continue;
+                    }
+                    Ok(response) => {
+                        consecutive_errors = 0;
                 let mut needs_repaint = false;
                 if response[0] == 0xff {
                     let size = response[1] as usize;
@@ -101,8 +122,10 @@ impl Keyboard {
                         .is_none_or(|time_to_hide| Instant::now() < *time_to_hide);
                 }
 
-                if needs_repaint {
-                    ui_wake.request_repaint();
+                        if needs_repaint {
+                            ui_wake.request_repaint();
+                        }
+                    }
                 }
             }
         });

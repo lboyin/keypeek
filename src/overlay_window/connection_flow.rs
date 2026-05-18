@@ -148,6 +148,8 @@ impl OverlayApp {
             }
         };
 
+        self.session.last_spec = Some(spec.clone());
+
         let request = ConnectionRequest {
             spec,
             timeout: self.settings.draft.timeout,
@@ -179,4 +181,42 @@ impl OverlayApp {
             None => {}
         }
     }
-}
+
+    /// If the connected keyboard has signaled `connection_lost` (e.g., the
+    /// keyboard went to sleep and the USB HID interface dropped), tear down
+    /// the dead Keyboard and kick off a fresh connection attempt using the
+    /// stored ConnectionSpec.
+    pub(super) fn maybe_auto_reconnect(&mut self) {
+        let lost = if let AppConnectionState::Connected { keyboard } = &self.session.connection {
+            keyboard
+                .connection_lost
+                .load(std::sync::atomic::Ordering::Relaxed)
+        } else {
+            false
+        };
+        if !lost {
+            return;
+        }
+        // Drop the dead keyboard
+        self.session.connection = AppConnectionState::Disconnected;
+        // Already trying to reconnect? Leave it alone.
+        if self.connect.pending_connect.is_some() {
+            return;
+        }
+        // Spawn a new connection task using the stored spec
+        if let Some(spec) = self.session.last_spec.clone() {
+            let request = ConnectionRequest {
+                spec,
+                timeout: self.settings.active.timeout,
+                layout_name: if self.session.active_layout_name.is_empty() {
+                    None
+                } else {
+                    Some(self.session.active_layout_name.clone())
+                },
+            };
+            self.connect.pending_connect =
+                Some(ConnectionTask::start(request, self.ui_wake.clone()));
+            self.ui.settings_error = None;
+        }
+    }
+}}
