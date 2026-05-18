@@ -285,7 +285,7 @@ impl OverlayApp {
                         LabelGalleys {
                             symbol: Some(symbol_galley),
                             text: None,
-                            hold: hold_galley.clone(),
+                            hold,
                         } => {
                             let sym_pos = rect.center() - symbol_galley.rect.center().to_vec2();
                             ui.painter().galley(sym_pos, symbol_galley, font_color);
@@ -301,7 +301,7 @@ impl OverlayApp {
                         LabelGalleys {
                             symbol: None,
                             text: Some(text_galley),
-                            hold: hold_galley.clone(),
+                            hold,
                         } => {
                             let label_pos = rect.center() - text_galley.rect.center().to_vec2();
                             ui.painter().galley(label_pos, text_galley, font_color);
