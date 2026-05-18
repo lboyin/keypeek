@@ -219,4 +219,4 @@ impl OverlayApp {
             self.ui.settings_error = None;
         }
     }
-}}
+}
